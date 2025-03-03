@@ -10,7 +10,7 @@
             {{ message.sender.initials }}
           </div>
           <div>
-            <div class="font-medium">{{ message.sender.name }}</div>
+            <div class="font-medium">{{ formatName(message.sender.name) }}</div>
             <div class="text-gray-500 text-sm">{{ message.content }}</div>
           </div>
         </div>
@@ -21,6 +21,20 @@
 
 <script>
 const API_BASE_URL = "https://greenvelvet.alwaysdata.net/kwick/api";
+
+// Fonction utilitaire pour capitaliser la première lettre
+function capitalizeFirstLetter(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+// Fonction pour formater un nom complet
+function formatFullName(username) {
+  if (username.includes(".")) {
+    const [firstName, lastName] = username.split(".");
+    return `${capitalizeFirstLetter(firstName)} ${capitalizeFirstLetter(lastName)}`;
+  }
+  return capitalizeFirstLetter(username);
+}
 
 export default {
   data() {
@@ -33,6 +47,19 @@ export default {
     this.fetchMessages();
   },
   methods: {
+    formatName(name) {
+      // Pour gérer les noms qui sont déjà au format "Prénom Nom"
+      if (name.includes(" ")) {
+        const [firstName, lastName] = name.split(" ");
+        return `${capitalizeFirstLetter(firstName)} ${capitalizeFirstLetter(lastName)}`;
+      }
+      // Pour gérer les noms au format "prenom.nom"
+      if (name.includes(".")) {
+        return formatFullName(name);
+      }
+      return capitalizeFirstLetter(name);
+    },
+
     async fetchMessages() {
       const token = localStorage.getItem("token");
       try {
@@ -41,7 +68,6 @@ export default {
 
         console.log("Réponse API - Historique des messages :", data);
 
-        // Vérifier que l'API renvoie bien une liste de messages
         if (!data.result || !Array.isArray(data.result.talk)) {
           console.error("Format des messages incorrect :", data);
           this.messages = [];
@@ -49,17 +75,20 @@ export default {
         }
 
         this.messages = data.result.talk.map((msg) => {
-          console.log("Message reçu :", msg); // Debug chaque message
+          console.log("Message reçu :", msg);
 
-          // Utiliser `msg.user_name` au lieu de `msg.user`
           let senderName = "Utilisateur inconnu";
           let initials = "??";
 
           if (msg.user_name && typeof msg.user_name === "string" && msg.user_name.trim() !== "") {
-            senderName = msg.user_name.includes(".") ? msg.user_name.replace(".", " ") : msg.user_name;
-            initials = msg.user_name.includes(".")
-              ? msg.user_name.split(".")[0][0].toUpperCase() + msg.user_name.split(".")[1][0].toUpperCase()
-              : msg.user_name[0].toUpperCase();
+            if (msg.user_name.includes(".")) {
+              const [firstName, lastName] = msg.user_name.split(".");
+              senderName = msg.user_name;
+              initials = firstName[0].toUpperCase() + lastName[0].toUpperCase();
+            } else {
+              senderName = msg.user_name;
+              initials = msg.user_name[0].toUpperCase();
+            }
           } else {
             console.warn("Nom d'utilisateur manquant ou incorrect :", msg);
           }

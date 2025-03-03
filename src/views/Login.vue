@@ -1,6 +1,6 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
-<div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+<div class="flex flex-col items-center justify-center min-h-screen bg-green-100">
   <img src="../assets/Logo.png" alt="Logo" class="h-12 mr-2" />
     <h1 class="text-4xl font-bold text-gray-800 mb-6"></h1>
     <form @submit.prevent="login" class="w-full max-w-sm p-8 bg-white shadow-lg rounded-lg">
