@@ -1,6 +1,6 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <div class="flex h-screen">
+  <div v-if="isAuthenticated" class="flex h-screen">
     <!-- Sidebar -->
     <div class="bg-white border-r w-64 p-4 flex flex-col">
       <img src="@/assets/Logo.png" alt="Open Messenger" class="w-24 mx-auto mb-4" />
@@ -55,6 +55,19 @@
       </div>
       <div class="border-t border-gray-200 p-4 bg-white">
         <MessageInput @send-message="sendMessage" />
+      </div>
+    </div>
+  </div>
+  <div v-else>
+    <div class="h-screen flex items-center justify-center">
+      <div class="text-center">
+        <h2 class="text-xl mb-4">Veuillez vous connecter pour accéder au chat</h2>
+        <button
+          @click="$router.push('/login')"
+          class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+        >
+          Se connecter
+        </button>
       </div>
     </div>
   </div>
@@ -123,14 +136,14 @@ export default {
         return;
       }
 
-      // Générer les initiales
+
       let initials = username[0].toUpperCase();
       if (username.includes(".")) {
         const [firstName, lastName] = username.split(".");
         initials = firstName[0].toUpperCase() + lastName[0].toUpperCase();
       }
 
-      // Met à jour `currentUser` avec l'utilisateur connecté
+
       this.currentUser = {
         name: username.replace(".", " "), // Remplace "." par un espace pour un affichage propre
         initials: initials,
@@ -149,7 +162,7 @@ export default {
 
         console.log("Réponse brute de l'API - Utilisateurs connectés :", data);
 
-        // Vérifier si `data.result.user` est bien défini et un tableau
+
         if (!data.result || !data.result.user || !Array.isArray(data.result.user)) {
           console.error("Données incorrectes pour les utilisateurs :", data);
           this.onlineUsers = []; // Évite les erreurs si la liste est vide

@@ -27,7 +27,6 @@
 
 <script>
 import logo from "@/assets/logo.png";
-import axios from 'axios';
 import API_BASE_URL from '../main';
 
 export default {
@@ -41,45 +40,40 @@ export default {
   },
   methods: {
     async register() {
-  const usernameRegex = /^[a-zA-Z]+\.[a-zA-Z]+$/;
-  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+      const usernameRegex = /^[a-zA-Z]+\.[a-zA-Z]+$/;
+      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
 
-  if (!usernameRegex.test(this.username)) {
-    this.errorMessage = 'Username must be in format: firstname.lastname';
-    return;
-  }
-  if (!passwordRegex.test(this.password)) {
-    this.errorMessage = 'Password must be at least 6 characters and contain both letters and numbers';
-    return;
-  }
+      // Validation du format username
+      if (!usernameRegex.test(this.username)) {
+        this.errorMessage = 'Username must be in format: firstname.lastname';
+        return;
+      }
+      // Validation du mot de passe
+      if (!passwordRegex.test(this.password)) {
+        this.errorMessage = 'Password must be at least 6 characters and contain both letters and numbers';
+        return;
+      }
 
-  try {
-    const requestUrl = `${API_BASE_URL}/signup/${this.username}/${this.password}`;
-    console.log("Attempting registration with URL:", requestUrl);
+      try {
+        const requestUrl = `${API_BASE_URL}/signup/${this.username}/${this.password}`;
+        console.log("Attempting registration with URL:", requestUrl);
 
-    const response = await axios.get(requestUrl); // On utilise GET car l'API fonctionne comme ça
+        const response = await fetch(requestUrl);
+        const data = await response.json();
 
-    console.log("API Response:", response.data);
+        console.log("API Response:", data);
 
-
-    if (response.data.kwick && response.data.kwick.status === 'ok') {
-        console.log('User registered successfully:', response.data);
-        this.$router.push('/login');
-    } else {
-        this.errorMessage = response.data.result.message || 'Registration failed, try again.';
-    }
-} catch (error) {
-    console.error("API Request Error:", error);
-
-    if (error.response) {
-        console.error("Error Response Data:", error.response.data);
-        this.errorMessage = `API Error: ${error.response.data.message || 'Unknown error'}`;
-    } else {
+        if (data.kwick && data.kwick.status === 'ok') {
+          console.log('User registered successfully:', data);
+          this.$router.push('/login');
+        } else {
+          this.errorMessage = data.result?.message || 'Registration failed, try again.';
+        }
+      } catch (error) {
+        console.error("API Request Error:", error);
         this.errorMessage = 'An error occurred during registration.';
+      }
     }
-}
-
-}
-}
+  }
 };
 </script>
