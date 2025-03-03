@@ -61,8 +61,8 @@
 </template>
 
 <script>
-import MessageList from "@/components/MessageList.vue";
-import MessageInput from "@/components/MessageInput.vue";
+import MessageList from "../components/MessageList.vue";
+import MessageInput from "../components/MessageInput.vue";
 
 const API_BASE_URL = "https://greenvelvet.alwaysdata.net/kwick/api";
 
