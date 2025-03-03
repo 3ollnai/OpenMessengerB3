@@ -73,27 +73,47 @@ export default {
   },
   data() {
     return {
+      isAuthenticated: false,
       currentUser: { name: "", initials: "", id: "" },
       onlineUsers: [],
       messages: [],
       searchQuery: "",
     };
   },
+  created() {
+    this.checkAuth();
+  },
+  mounted() {
+    if (this.isAuthenticated) {
+      this.fetchCurrentUser();
+      this.fetchOnlineUsers();
+      this.fetchMessages();
+      setInterval(this.fetchOnlineUsers, 5000);
+      setInterval(this.fetchMessages, 5000);
+    }
+  },
   computed: {
     filteredUsers() {
       return this.onlineUsers.filter(
-        (user) => user.name !== this.currentUser.name && user.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+        (user) => user.name !== this.currentUser.name &&
+                 user.name.toLowerCase().includes(this.searchQuery.toLowerCase())
       );
     },
   },
-  mounted() {
-    this.fetchCurrentUser();
-    this.fetchOnlineUsers();
-    this.fetchMessages();
-    setInterval(this.fetchOnlineUsers, 5000);
-    setInterval(this.fetchMessages, 5000);
-  },
   methods: {
+    checkAuth() {
+      const token = localStorage.getItem("token");
+      const username = localStorage.getItem("user_name");
+
+      if (!token || !username) {
+        this.isAuthenticated = false;
+        this.$router.push("/login");
+        return;
+      }
+
+      this.isAuthenticated = true;
+    },
+
     async fetchCurrentUser() {
       const token = localStorage.getItem("token");
       const username = localStorage.getItem("user_name"); // Récupère le pseudo stocké après connexion
