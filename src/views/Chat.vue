@@ -14,7 +14,7 @@
           <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
             {{ currentUser.initials }}
           </div>
-          <div class="font-medium uppercase">{{ currentUser.name }}</div>
+          <div class="font-medium">{{ currentUser.name }}</div>
         </div>
         <button @click="logout" class="w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-700">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6">
@@ -41,7 +41,7 @@
           <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
             {{ user.initials }}
           </div>
-          <div class="font-medium uppercase">{{ user.name }}</div>
+          <div class="font-medium">{{ user.name }}</div>
         </div>
       </div>
       <div v-else class="text-center text-gray-500 mt-4">No users online</div>
@@ -78,6 +78,18 @@ import MessageList from "../components/MessageList.vue";
 import MessageInput from "../components/MessageInput.vue";
 
 const API_BASE_URL = "https://greenvelvet.alwaysdata.net/kwick/api";
+
+function capitalizeFirstLetter(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+function formatName(username) {
+  if (username.includes(".")) {
+    const [firstName, lastName] = username.split(".");
+    return `${capitalizeFirstLetter(firstName)} ${capitalizeFirstLetter(lastName)}`;
+  }
+  return capitalizeFirstLetter(username);
+}
 
 export default {
   components: {
@@ -143,7 +155,7 @@ export default {
       }
 
       this.currentUser = {
-        name: username.replace(".", " ").toUpperCase(), // Conversion en majuscules
+        name: formatName(username),
         initials: initials,
         id: username,
       };
@@ -176,7 +188,7 @@ export default {
           .map((username) => {
             const [firstName, lastName] = username.split(".");
             return {
-              name: `${firstName} ${lastName}`.toUpperCase(), // Conversion en majuscules
+              name: formatName(username),
               initials: firstName[0].toUpperCase() + lastName[0].toUpperCase(),
             };
           });
@@ -205,18 +217,18 @@ export default {
         this.messages = data.result.talk
           .filter(msg => msg.user && typeof msg.user === "string")
           .map((msg) => {
-            const senderName = msg.user.includes(".") ? msg.user.replace(".", " ") : msg.user;
+            const senderName = msg.user;
             const initials = msg.user.includes(".")
               ? msg.user.split(".")[0][0].toUpperCase() + msg.user.split(".")[1][0].toUpperCase()
               : msg.user[0].toUpperCase();
 
             return {
               sender: {
-                name: senderName.toUpperCase(), // Conversion en majuscules
+                name: formatName(senderName),
                 initials: initials,
               },
               content: msg.content,
-              id: msg.id,
+              id: msg.timestamp || Date.now(),
             };
           });
 
@@ -225,24 +237,22 @@ export default {
       }
     },
 
-    async sendMessage(message) {
-      if (!message.trim()) return;
-
-      console.log("Message envoyé :", message);
-
-      this.messages.push({
-        sender: {
-          name: this.currentUser.name.toUpperCase(), // Conversion en majuscules
-          initials: this.currentUser.initials
-        },
-        content: message,
-        id: Date.now(),
-      });
-    },
 
     logout() {
-      localStorage.removeItem("token");
-      this.$router.push("/login");
+      const token = localStorage.getItem("token");
+      fetch(`${API_BASE_URL}/user/logout/${token}`)
+        .then(response => response.json())
+        .then(() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user_name");
+          this.$router.push("/login");
+        })
+        .catch(error => {
+          console.error("Erreur lors de la déconnexion:", error);
+          localStorage.removeItem("token");
+          localStorage.removeItem("user_name");
+          this.$router.push("/login");
+        });
     },
   },
 };
