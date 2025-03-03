@@ -14,7 +14,7 @@
           <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
             {{ currentUser.initials }}
           </div>
-          <div class="font-medium">{{ currentUser.name }}</div>
+          <div class="font-medium uppercase">{{ currentUser.name }}</div>
         </div>
         <button @click="logout" class="w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-700">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6">
@@ -41,7 +41,7 @@
           <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
             {{ user.initials }}
           </div>
-          <div class="font-medium">{{ user.name }}</div>
+          <div class="font-medium uppercase">{{ user.name }}</div>
         </div>
       </div>
       <div v-else class="text-center text-gray-500 mt-4">No users online</div>
@@ -78,20 +78,6 @@ import MessageList from "../components/MessageList.vue";
 import MessageInput from "../components/MessageInput.vue";
 
 const API_BASE_URL = "https://greenvelvet.alwaysdata.net/kwick/api";
-
-// Fonction utilitaire pour capitaliser la première lettre
-function capitalizeFirstLetter(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-}
-
-// Fonction pour formater un nom complet
-function formatFullName(username) {
-  if (username.includes(".")) {
-    const [firstName, lastName] = username.split(".");
-    return `${capitalizeFirstLetter(firstName)} ${capitalizeFirstLetter(lastName)}`;
-  }
-  return capitalizeFirstLetter(username);
-}
 
 export default {
   components: {
@@ -157,7 +143,7 @@ export default {
       }
 
       this.currentUser = {
-        name: formatFullName(username),
+        name: username.replace(".", " ").toUpperCase(), // Conversion en majuscules
         initials: initials,
         id: username,
       };
@@ -170,6 +156,8 @@ export default {
       try {
         const response = await fetch(`${API_BASE_URL}/user/logged/${token}`);
         const data = await response.json();
+
+        console.log("Réponse brute de l'API - Utilisateurs connectés :", data);
 
         if (!data.result || !data.result.user || !Array.isArray(data.result.user)) {
           console.error("Données incorrectes pour les utilisateurs :", data);
@@ -188,7 +176,7 @@ export default {
           .map((username) => {
             const [firstName, lastName] = username.split(".");
             return {
-              name: `${capitalizeFirstLetter(firstName)} ${capitalizeFirstLetter(lastName)}`,
+              name: `${firstName} ${lastName}`.toUpperCase(), // Conversion en majuscules
               initials: firstName[0].toUpperCase() + lastName[0].toUpperCase(),
             };
           });
@@ -207,6 +195,8 @@ export default {
         const response = await fetch(`${API_BASE_URL}/talk/list/${token}/0`);
         const data = await response.json();
 
+        console.log("Réponse API - Historique des messages :", data);
+
         if (!data.result || !Array.isArray(data.result.talk)) {
           console.error("Format des messages incorrect :", data);
           return;
@@ -215,13 +205,14 @@ export default {
         this.messages = data.result.talk
           .filter(msg => msg.user && typeof msg.user === "string")
           .map((msg) => {
+            const senderName = msg.user.includes(".") ? msg.user.replace(".", " ") : msg.user;
             const initials = msg.user.includes(".")
               ? msg.user.split(".")[0][0].toUpperCase() + msg.user.split(".")[1][0].toUpperCase()
               : msg.user[0].toUpperCase();
 
             return {
               sender: {
-                name: formatFullName(msg.user),
+                name: senderName.toUpperCase(), // Conversion en majuscules
                 initials: initials,
               },
               content: msg.content,
@@ -237,28 +228,20 @@ export default {
     async sendMessage(message) {
       if (!message.trim()) return;
 
-      const token = localStorage.getItem("token");
-      try {
-        const response = await fetch(`${API_BASE_URL}/talk/new/${token}/${encodeURIComponent(message)}`);
-        const data = await response.json();
+      console.log("Message envoyé :", message);
 
-        if (data.result.status === "failure") {
-          console.error("Erreur lors de l'envoi du message:", data.result.message);
-          return;
-        }
-
-        // Actualiser les messages après l'envoi
-        this.fetchMessages();
-
-      } catch (error) {
-        console.error("Erreur lors de l'envoi du message:", error);
-      }
+      this.messages.push({
+        sender: {
+          name: this.currentUser.name.toUpperCase(), // Conversion en majuscules
+          initials: this.currentUser.initials
+        },
+        content: message,
+        id: Date.now(),
+      });
     },
 
     logout() {
       localStorage.removeItem("token");
-      localStorage.removeItem("user_name");
-      this.isAuthenticated = false;
       this.$router.push("/login");
     },
   },

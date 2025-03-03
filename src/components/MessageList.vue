@@ -139,6 +139,7 @@ export default {
 </script>
 
 <style scoped>
+/* Animation pour les nouveaux messages */
 .fade-enter-active, .fade-leave-active {
   transition: opacity 0.5s;
 }
