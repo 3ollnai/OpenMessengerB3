@@ -23,7 +23,7 @@
         <template v-else>
           <div class="flex items-start space-x-2 ml-auto">
             <div>
-              <div class="text-sm text-gray-600 mb-1 text-right">Vous</div>
+              <div class="text-sm text-gray-600 mb-1 text-right">{{ formatName(message.sender.name) }}</div>
               <div class="bg-green-500 text-white rounded-2xl rounded-tr-none px-4 py-2 shadow-sm max-w-md">
                 <p>{{ message.content }}</p>
               </div>
